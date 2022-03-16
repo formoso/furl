@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	if len(os.Args) < 1 {
+	if len(os.Args) <= 1 {
 		fmt.Fprintf(os.Stderr, "URL parameter not informed\n")
 		os.Exit(1)
 	}
