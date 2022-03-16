@@ -15,6 +15,7 @@ type Response struct {
 	Body        []byte
 }
 
+// Get pega o conteudo da url e conta o tempo
 func Get(url string) (Response, error) {
 	start := time.Now()
 	r := initResponse(url)
