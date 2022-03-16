@@ -9,7 +9,7 @@ import (
 
 func main() {
 	// Este IF verifica o número de argumentos
-	if len(os.Args) <= 1 {
+	if len(os.Args) == 2 {
 		fmt.Fprintf(os.Stderr, "URL parameter not informed\n")
 		os.Exit(1)
 	}
