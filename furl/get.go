@@ -13,28 +13,30 @@ type Response struct {
 	ElapsedTime int64
 	NBytes      int64
 	Body        []byte
+	Err         error
 }
 
-func Get(url string) (Response, error) {
-	start := time.Now()
-	r := initResponse(url)
-	resp, err := http.Get(url)
-	if err != nil {
-		return r, err
+func Get(url []string, canal chan Response) {
+	for i := 1; i < len(url); i++ {
+		start := time.Now()
+		urls := url[i]
+		r := initResponse(urls)
+		resp, err := http.Get(urls)
+		if err != nil {
+			canal <- r
+			return
+		}
+		defer resp.Body.Close()
+		r.Body, err = io.ReadAll(resp.Body)
+		resp.Body = ioutil.NopCloser(bytes.NewBuffer(r.Body))
+		r.NBytes, err = io.Copy(ioutil.Discard, resp.Body)
+		if err != nil {
+			canal <- r
+			return
+		}
+		r.ElapsedTime = time.Since(start).Milliseconds()
+		canal <- r
 	}
-	defer resp.Body.Close()
-	r.Body, err = io.ReadAll(resp.Body)
-	if err != nil {
-		return r, err
-	}
-	resp.Body = ioutil.NopCloser(bytes.NewBuffer(r.Body))
-	r.NBytes, err = io.Copy(ioutil.Discard, resp.Body)
-	if err != nil {
-		return r, err
-	}
-	r.ElapsedTime = time.Since(start).Milliseconds()
-
-	return r, err
 }
 
 func initResponse(url string) Response {
@@ -42,7 +44,6 @@ func initResponse(url string) Response {
 		Url:         url,
 		ElapsedTime: 0,
 		NBytes:      0,
-		Body:        []byte{},
 	}
 	return r
 }
