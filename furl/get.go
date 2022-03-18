@@ -18,25 +18,27 @@ type Response struct {
 
 func Get(url []string, canal chan Response) {
 	for i := 1; i < len(url); i++ {
-		start := time.Now()
-		urls := url[i]
-		r := initResponse(urls)
-		resp, err := http.Get(urls)
-		if err != nil {
-			canal <- r
-			return
-		}
+		go func(i int) {
+			start := time.Now()
+			urls := url[i]
+			r := initResponse(urls)
+			resp, err := http.Get(urls)
+			if err != nil {
+				canal <- r
+				return
+			}
 
-		defer resp.Body.Close()
-		r.Body, err = io.ReadAll(resp.Body)
-		resp.Body = ioutil.NopCloser(bytes.NewBuffer(r.Body))
-		r.NBytes, err = io.Copy(ioutil.Discard, resp.Body)
-		if err != nil {
+			defer resp.Body.Close()
+			r.Body, err = io.ReadAll(resp.Body)
+			resp.Body = ioutil.NopCloser(bytes.NewBuffer(r.Body))
+			r.NBytes, err = io.Copy(ioutil.Discard, resp.Body)
+			if err != nil {
+				canal <- r
+				return
+			}
+			r.ElapsedTime = time.Since(start).Milliseconds()
 			canal <- r
-			return
-		}
-		r.ElapsedTime = time.Since(start).Milliseconds()
-		canal <- r
+		}(i)
 	}
 }
 

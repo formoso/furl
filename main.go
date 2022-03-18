@@ -24,4 +24,5 @@ func main() {
 		}
 		fmt.Printf("%dms %7d %s\n", resp.ElapsedTime, resp.NBytes, resp.Url)
 	}
+
 }
