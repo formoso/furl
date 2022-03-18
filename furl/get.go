@@ -13,28 +13,31 @@ type Response struct {
 	ElapsedTime int64
 	NBytes      int64
 	Body        []byte
+	Err         error
 }
 
-func Get(url string) (Response, error) {
-	start := time.Now()
-	r := initResponse(url)
-	resp, err := http.Get(url)
-	if err != nil {
-		return r, err
-	}
-	defer resp.Body.Close()
-	r.Body, err = io.ReadAll(resp.Body)
-	if err != nil {
-		return r, err
-	}
-	resp.Body = ioutil.NopCloser(bytes.NewBuffer(r.Body))
-	r.NBytes, err = io.Copy(ioutil.Discard, resp.Body)
-	if err != nil {
-		return r, err
-	}
-	r.ElapsedTime = time.Since(start).Milliseconds()
+func Get(url []string, canal chan Response) {
+	for i := 1; i < len(url); i++ {
+		start := time.Now()
+		urls := url[i]
+		r := initResponse(urls)
+		resp, err := http.Get(urls)
+		if err != nil {
+			canal <- r
+			return
+		}
 
-	return r, err
+		defer resp.Body.Close()
+		r.Body, err = io.ReadAll(resp.Body)
+		resp.Body = ioutil.NopCloser(bytes.NewBuffer(r.Body))
+		r.NBytes, err = io.Copy(ioutil.Discard, resp.Body)
+		if err != nil {
+			canal <- r
+			return
+		}
+		r.ElapsedTime = time.Since(start).Milliseconds()
+		canal <- r
+	}
 }
 
 func initResponse(url string) Response {

@@ -12,22 +12,26 @@ func TestGet_OK(t *testing.T) {
 		w.WriteHeader(200)
 		w.Write([]byte(want))
 	}))
+
 	defer srv.Close()
-	resp, err := Get(srv.URL)
-	if err != nil {
-		t.Errorf("Unexpected error on request: %s", err)
-	}
-	if string(resp.Body) != want {
-		t.Errorf("want %s, got %s", want, resp.Body)
+	canal := make(chan Response)
+	url := []string{"", srv.URL}
+	go Get(url, canal)
+	resp := <-canal
+	if resp.Err != nil {
+		t.Errorf("Unexpected error on request: %s", resp.Err)
 	}
 }
 
 func TestGet_Error_Get(t *testing.T) {
-	resp, err := Get("123")
-	if err == nil {
-		t.Errorf("Error expected on request: %v", resp)
+	canal := make(chan Response)
+	url := []string{"", "321"}
+	go Get(url, canal)
+	resp := <-canal
+	if resp.Err != nil {
+		t.Errorf("Unexpected error on request: %s", resp.Err)
 	}
-	if resp.Body != nil && resp.ElapsedTime > 0 && resp.NBytes == 0 && resp.Url == "123" {
+	if resp.Err != nil && resp.ElapsedTime > 0 && resp.NBytes == 0 && resp.Url == "123" {
 		t.Errorf("no value in request is expected: %v", resp)
 	}
 }
