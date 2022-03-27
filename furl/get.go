@@ -13,28 +13,17 @@ type Response struct {
 	ElapsedTime int64
 	NBytes      int64
 	Body        []byte
+	Err         error
 }
 
-func Get(url string) (Response, error) {
-	start := time.Now()
-	r := initResponse(url)
-	resp, err := http.Get(url)
-	if err != nil {
-		return r, err
+func Get(urls []string) *chan Response {
+	ch := initChan()
+	for i := 1; i < len(urls); i++ {
+		url := urls[i]
+		r := initResponse(url)
+		go readUrl(i, r, ch)
 	}
-	defer resp.Body.Close()
-	r.Body, err = io.ReadAll(resp.Body)
-	if err != nil {
-		return r, err
-	}
-	resp.Body = ioutil.NopCloser(bytes.NewBuffer(r.Body))
-	r.NBytes, err = io.Copy(ioutil.Discard, resp.Body)
-	if err != nil {
-		return r, err
-	}
-	r.ElapsedTime = time.Since(start).Milliseconds()
-
-	return r, err
+	return ch
 }
 
 func initResponse(url string) Response {
@@ -43,6 +32,46 @@ func initResponse(url string) Response {
 		ElapsedTime: 0,
 		NBytes:      0,
 		Body:        []byte{},
+		Err:         nil,
 	}
+	return r
+}
+
+func initChan() *chan Response {
+	ch := make(chan (Response))
+	return &ch
+}
+
+func readUrl(i int, r Response, ch *chan Response) {
+	start := time.Now()
+	resp, _ := http.Get(r.Url)
+	_, r.Err = http.Get(r.Url)
+	if r.Err != nil {
+		*ch <- r
+		return
+	}
+	defer resp.Body.Close()
+	r = readBody(r, resp)
+	if r.Err != nil {
+		*ch <- r
+		return
+	}
+	r = readNBytes(r, resp)
+	if r.Err != nil {
+		*ch <- r
+		return
+	}
+	r.ElapsedTime = time.Since(start).Milliseconds()
+	*ch <- r
+}
+
+func readBody(r Response, resp *http.Response) Response {
+	r.Body, r.Err = io.ReadAll(resp.Body)
+	resp.Body = ioutil.NopCloser(bytes.NewBuffer(r.Body))
+	return r
+}
+
+func readNBytes(r Response, resp *http.Response) Response {
+	r.NBytes, r.Err = io.Copy(ioutil.Discard, resp.Body)
 	return r
 }
