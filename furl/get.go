@@ -21,7 +21,9 @@ func Get(urls []string) *chan Response {
 	for i := 1; i < len(urls); i++ {
 		url := urls[i]
 		r := initResponse(url)
-		go readUrl(i, r, ch)
+		if r.Url != "body" {
+			go readUrl(i, r, ch)
+		}
 	}
 	return ch
 }

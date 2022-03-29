@@ -7,8 +7,7 @@ import (
 )
 
 func main() {
-	// Este IF verifica o número de argumentos
 	urls := argumentos.InitArgs()
 	ch := furl.Get(urls)
-	resposta.RespostaGet(ch, urls)
+	resposta.RespostaGet(ch)
 }
