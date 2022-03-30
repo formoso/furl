@@ -1,13 +1,18 @@
 package main
 
 import (
+	"fmt"
+	"os"
+
 	"github.com/formoso/furl/furl"
-	"github.com/formoso/furl/pkg/argumentos"
-	"github.com/formoso/furl/pkg/resposta"
+	"github.com/formoso/furl/pkg/arguments"
 )
 
 func main() {
-	urls := argumentos.InitArgs()
-	ch := furl.Get(urls)
-	resposta.RespostaGet(ch)
+	urls, err := arguments.GetURLs()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, err.Error(), "\n")
+		os.Exit(1)
+	}
+	furl.Get(urls)
 }
