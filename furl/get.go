@@ -2,10 +2,14 @@ package furl
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"time"
+
+	"github.com/formoso/furl/pkg/arguments"
 )
 
 type Response struct {
@@ -16,7 +20,7 @@ type Response struct {
 	Err         error
 }
 
-func Get(urls []string) *chan Response {
+func Get(urls []string) {
 	ch := initChan()
 	for i := 1; i < len(urls); i++ {
 		url := urls[i]
@@ -25,7 +29,7 @@ func Get(urls []string) *chan Response {
 			go readUrl(i, r, ch)
 		}
 	}
-	return ch
+	respostaGet(ch)
 }
 
 func initResponse(url string) Response {
@@ -76,4 +80,28 @@ func readBody(r Response, resp *http.Response) Response {
 func readNBytes(r Response, resp *http.Response) Response {
 	r.NBytes, r.Err = io.Copy(ioutil.Discard, resp.Body)
 	return r
+}
+
+func respostaGet(ch *chan Response) {
+	body, leng := arguments.NoBody()
+	for i := 1; i < leng; i++ {
+		resp := <-*ch
+		if resp.Err != nil {
+			fmt.Fprintf(os.Stderr, "Error fetching URL:%v\n", resp.Err)
+			os.Exit(1)
+		}
+		if body {
+			printerBody(resp)
+		} else {
+			printerNoBody(resp)
+		}
+	}
+}
+
+func printerNoBody(resp Response) {
+	fmt.Printf("%dms %7d %s\n", resp.ElapsedTime, resp.NBytes, resp.Url)
+}
+
+func printerBody(resp Response) {
+	fmt.Printf("%dms %7d %s \n Body:%s\n", resp.ElapsedTime, resp.NBytes, resp.Url, resp.Body)
 }
