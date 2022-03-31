@@ -5,21 +5,14 @@ import (
 	"os"
 
 	"github.com/formoso/furl/furl"
+	"github.com/formoso/furl/pkg/arguments"
 )
 
 func main() {
-	// Este IF verifica o número de argumentos
-	if len(os.Args) <= 1 {
-		fmt.Fprintf(os.Stderr, "URL parameter not informed\n")
-		os.Exit(1)
-	}
-	url := os.Args[1]
-	resp, err := furl.Get(url)
+	urls, err, wBody := arguments.GetURLs()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error fetching URL:%v\n", err)
+		fmt.Fprintf(os.Stderr, err.Error(), "\n")
 		os.Exit(1)
 	}
-
-	fmt.Printf("%dms %7d %s %s\n", resp.ElapsedTime, resp.NBytes, resp.Url, resp.Body)
-
+	furl.Get(urls, wBody)
 }
