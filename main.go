@@ -9,10 +9,10 @@ import (
 )
 
 func main() {
-	urls, err := arguments.GetURLs()
+	urls, err, wBody := arguments.GetURLs()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, err.Error(), "\n")
 		os.Exit(1)
 	}
-	furl.Get(urls)
+	furl.Get(urls, wBody)
 }

@@ -8,21 +8,22 @@ import (
 
 //GetURLs retorna uma lista de URLs validas
 //ou um erro caso exista
-func GetURLs() ([]string, error) {
-	Args, err := validate()
-	return Args, err
+func GetURLs() ([]string, error, bool) {
+	Args, err, wBody := validate()
+	return Args, err, wBody
 }
 
-func validate() ([]string, error) {
+func validate() ([]string, error, bool) {
 	if len(os.Args) <= 1 {
-		return nil, errors.New("URL parameter not informed")
+		return nil, errors.New("URL parameter not informed"), false
 	}
 	err := isURLsValids(os.Args)
 	if err != nil {
-		return nil, err
+		return nil, err, false
 	}
-	args := removeBody()
-	return args, nil
+	wBody := noBody()
+	args := fixParameter()
+	return args, nil, wBody
 }
 
 func isURLsValids(urls []string) error {
@@ -37,20 +38,22 @@ func isURLsValids(urls []string) error {
 	return nil
 }
 
-func NoBody() (bool, int) {
+func noBody() bool {
 	for _, body := range os.Args {
 		if body == "body" {
-			return true, len(os.Args) - 1
+			return true
 		}
 	}
-	return false, len(os.Args)
+	return false
 }
 
-func removeBody() []string {
+func fixParameter() []string {
 	var args []string
-	for _, s := range os.Args {
-		if s != "body" {
-			args = append(args, s)
+	for i, s := range os.Args {
+		if i != 0 {
+			if s != "body" {
+				args = append(args, s)
+			}
 		}
 	}
 	return args

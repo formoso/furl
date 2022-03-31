@@ -8,8 +8,6 @@ import (
 	"net/http"
 	"os"
 	"time"
-
-	"github.com/formoso/furl/pkg/arguments"
 )
 
 type Response struct {
@@ -20,16 +18,15 @@ type Response struct {
 	Err         error
 }
 
-func Get(urls []string) {
+func Get(urls []string, wBody bool) {
 	ch := initChan()
-	for i := 1; i < len(urls); i++ {
-		url := urls[i]
+	for _, url := range urls {
 		r := initResponse(url)
 		if r.Url != "body" {
-			go readUrl(i, r, ch)
+			go readUrl(r, ch, wBody)
 		}
 	}
-	respostaGet(ch)
+	respostaGet(ch, len(urls))
 }
 
 func initResponse(url string) Response {
@@ -48,19 +45,21 @@ func initChan() *chan Response {
 	return &ch
 }
 
-func readUrl(i int, r Response, ch *chan Response) {
+func readUrl(r Response, ch *chan Response, wBody bool) {
 	start := time.Now()
-	resp, _ := http.Get(r.Url)
-	_, r.Err = http.Get(r.Url)
+	resp, err := http.Get(r.Url)
 	if r.Err != nil {
+		r.Err = err
 		*ch <- r
 		return
 	}
 	defer resp.Body.Close()
-	r = readBody(r, resp)
-	if r.Err != nil {
-		*ch <- r
-		return
+	if wBody {
+		r = readBody(r, resp)
+		if r.Err != nil {
+			*ch <- r
+			return
+		}
 	}
 	r = readNBytes(r, resp)
 	if r.Err != nil {
@@ -82,26 +81,21 @@ func readNBytes(r Response, resp *http.Response) Response {
 	return r
 }
 
-func respostaGet(ch *chan Response) {
-	body, leng := arguments.NoBody()
-	for i := 1; i < leng; i++ {
+func respostaGet(ch *chan Response, lenArray int) {
+
+	for i := 0; i < lenArray; i++ {
 		resp := <-*ch
 		if resp.Err != nil {
 			fmt.Fprintf(os.Stderr, "Error fetching URL:%v\n", resp.Err)
 			os.Exit(1)
 		}
-		if body {
-			printerBody(resp)
-		} else {
-			printerNoBody(resp)
-		}
+		printer(resp)
 	}
 }
-
-func printerNoBody(resp Response) {
-	fmt.Printf("%dms %7d %s\n", resp.ElapsedTime, resp.NBytes, resp.Url)
-}
-
-func printerBody(resp Response) {
-	fmt.Printf("%dms %7d %s \n Body:%s\n", resp.ElapsedTime, resp.NBytes, resp.Url, resp.Body)
+func printer(resp Response) {
+	var sBody string
+	if len(resp.Body) > 0 {
+		sBody = fmt.Sprintf("Body:%s\n", resp.Body)
+	}
+	fmt.Printf("%dms %7d %s \n%s", resp.ElapsedTime, resp.NBytes, resp.Url, sBody)
 }
