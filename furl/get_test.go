@@ -31,3 +31,18 @@ func TestGet_Error_Get(t *testing.T) {
 		t.Errorf("no value in request is expected: %v", resp)
 	}
 }
+
+func TestBody_Nil_OK(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// At this point the error is forced when reading the body by the client.
+		// The client expects a body with size 1, but no body is being sent.
+		// This causes io.ReadAll to return an error.
+		w.Header().Set("Content-Length", "1")
+	}))
+	defer srv.Close()
+
+	_, err := Get(srv.URL)
+	if err == nil {
+		t.Errorf("err should equal unexpected EOF; want %v", err)
+	}
+}
