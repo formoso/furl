@@ -1,9 +1,7 @@
 package furl
 
 import (
-	"bytes"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"time"
 )
@@ -11,7 +9,7 @@ import (
 type Response struct {
 	Url         string
 	ElapsedTime int64
-	NBytes      int64
+	NBytes      int
 	Body        []byte
 }
 
@@ -27,11 +25,7 @@ func Get(url string) (Response, error) {
 	if err != nil {
 		return r, err
 	}
-	resp.Body = ioutil.NopCloser(bytes.NewBuffer(r.Body))
-	r.NBytes, err = io.Copy(ioutil.Discard, resp.Body)
-	if err != nil {
-		return r, err
-	}
+	r.NBytes = len(string(r.Body))
 	r.ElapsedTime = time.Since(start).Milliseconds()
 
 	return r, err
