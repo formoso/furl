@@ -4,7 +4,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)][badge-license]
 
 # fURL
-fURL(Formoso URL) is a computing project that fetches the content of a URL.
+fURL(Formoso URL) is a computing project that fetches the content of a URL. it's a joke with cURL.
 
 [badge-go]: https://pkg.go.dev/badge/github.com/formoso/furl.svg
 [badge-go-version]: https://go.dev/doc/go1.21
