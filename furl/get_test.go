@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func TestGet_OK(t *testing.T) {
+func Test_Get_Success(t *testing.T) {
 	want := "Success!"
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(200)
@@ -22,7 +22,19 @@ func TestGet_OK(t *testing.T) {
 	}
 }
 
-func TestGet_Error_Get(t *testing.T) {
+func Test_Get_NewRequest_Error(t *testing.T) {
+	expected := "parse \"http://[fe80::1%en0]/\": invalid URL escape \"%en\""
+	resp, err := Get("http://[fe80::1%en0]/")
+	if err == nil {
+		t.Errorf("Error expected on request: %v", resp)
+	}
+	if err.Error() != expected {
+		t.Errorf("Expected error: %v, but received: %v", expected, err.Error())
+	}
+
+}
+
+func Test_Get_DO_Error(t *testing.T) {
 	resp, err := Get("123")
 	if err == nil {
 		t.Errorf("Error expected on request: %v", resp)
@@ -32,7 +44,7 @@ func TestGet_Error_Get(t *testing.T) {
 	}
 }
 
-func TestBody_Nil_OK(t *testing.T) {
+func TestBody_Nil_Success(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// At this point the error is forced when reading the body by the client.
 		// The client expects a body with size 1, but no body is being sent.
