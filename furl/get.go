@@ -16,15 +16,27 @@ type Response struct {
 func Get(url string) (Response, error) {
 	start := time.Now()
 	r := initResponse(url)
-	resp, err := http.Get(url)
+
+	client := &http.Client{}
+
+	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		return r, err
+		return Response{}, err
 	}
+
+	req.Header.Set("User-Agent", "fURL/1.0")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return Response{}, err
+	}
+
 	defer resp.Body.Close()
 	r.Body, err = io.ReadAll(resp.Body)
 	if err != nil {
 		return r, err
 	}
+
 	r.NBytes = len(string(r.Body))
 	r.ElapsedTime = time.Since(start).Milliseconds()
 
